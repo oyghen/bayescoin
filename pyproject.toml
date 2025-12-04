@@ -10,8 +10,15 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
-bayescoin = "bayescoin:main"
+bayescoin = "bayescoin.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.9.15,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.0",
+    "pytest>=9.0.1",
+    "ruff>=0.14.8",
+]

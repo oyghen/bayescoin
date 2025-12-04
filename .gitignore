@@ -12,10 +12,6 @@ wheels/
 # macOS
 .DS_Store
 
-# IDEs
-.idea/
-.vscode/
-
 # Cache
 .pytest_cache
 .ruff_cache

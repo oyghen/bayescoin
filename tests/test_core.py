@@ -176,11 +176,16 @@ class TestHDI:
         assert hdi(a, b, 0.95) is None
 
     @pytest.mark.parametrize(
-        ("a", "b", "hdi_level", "expected_lower", "expected_upper"),
+        ("a", "b", "hdi_level", "expected"),
         [
-            (2, 2, 0.95, 0.094, 0.906),
-            (3, 5, 0.85, 0.128, 0.596),
-            (12, 8, 0.8, 0.466, 0.744),
+            (2, 2, 0.95, (0.094299, 0.905701)),
+            (2, 2, 0.90, (0.135350, 0.864649)),
+            (4, 4, 0.95, (0.184051, 0.815948)),
+            (4, 4, 0.90, (0.225321, 0.774678)),
+            (100, 100, 0.95, (0.430950, 0.569049)),
+            (100, 100, 0.90, (0.441969, 0.558030)),
+            (3, 5, 0.85, (0.128154, 0.595574)),
+            (12, 8, 0.8, (0.466301, 0.743738)),
         ],
     )
     def test_hdi_method(
@@ -188,14 +193,13 @@ class TestHDI:
         a: int | float,
         b: int | float,
         hdi_level: float,
-        expected_lower: float,
-        expected_upper: float,
+        expected: tuple[float, float],
     ):
         result = BetaShape(a, b)
         lower, upper = result.hdi(hdi_level)
         assert 0 <= lower < result.mean < upper <= 1
-        assert lower == pytest.approx(expected_lower, abs=1e-3)
-        assert upper == pytest.approx(expected_upper, abs=1e-3)
+        assert lower == pytest.approx(expected[0], abs=1e-6)
+        assert upper == pytest.approx(expected[1], abs=1e-6)
 
     def test_hdi_method_uses_hdi_function(self):
         beta_shape = BetaShape(2, 3)

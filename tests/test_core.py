@@ -366,12 +366,16 @@ class TestConveniencePriors:
         assert isinstance(result, BetaShape)
         assert result.a == pytest.approx(1.0)
         assert result.b == pytest.approx(1.0)
+        assert result.mean == pytest.approx(0.5)
+        assert result.mode is None
 
     def test_jeffreys(self):
         result = BetaShape.jeffreys()
         assert isinstance(result, BetaShape)
         assert result.a == pytest.approx(0.5)
         assert result.b == pytest.approx(0.5)
+        assert result.mean == pytest.approx(0.5)
+        assert result.mode is None
 
 
 class TestScipyObject:

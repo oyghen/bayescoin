@@ -163,6 +163,45 @@ class TestBetaShapeSummaries:
 
         assert first == second
 
+    @pytest.mark.parametrize(
+        ("a", "b", "mean", "mode", "hdi"),
+        [
+            (0.5, 0.5, 0.5, None, None),
+            (1, 1, 0.5, None, None),
+            (2, 2, 0.5, 0.5, (0.094299, 0.905701)),
+            (4, 3, 4 / 7, 0.6, (0.238706, 0.895169)),
+            (5, 4, 5 / 9, 4 / 7, (0.254086, 0.851192)),
+            (7, 5, 7 / 12, 6 / 10, (0.318232, 0.841428)),
+            (100, 100, 0.5, 0.5, (0.430951, 0.569049)),
+            (117, 103, 117 / 220, 116 / 218, (0.466015, 0.597460)),
+            (18.25, 6.75, 18.25 / 25, 17.25 / 23, (0.558194, 0.891582)),
+            (35.25, 9.75, 35.25 / 45, 34.25 / 43, (0.662908, 0.896649)),
+            (18, 4, 18 / 22, 17 / 20, (0.659947, 0.959123)),
+        ],
+    )
+    def test_summary_stats(
+        self,
+        a: int | float,
+        b: int | float,
+        mean: float,
+        mode: float | None,
+        hdi: tuple[float, float] | None,
+    ):
+        result = BetaShape(a, b)
+        assert result.mean == pytest.approx(mean)
+
+        if mode is None:
+            assert result.mode is None
+        if mode is not None:
+            assert result.mode == pytest.approx(mode)
+
+        if hdi is None:
+            assert result.hdi(0.95) is None
+        if hdi is not None:
+            lower, upper = result.hdi(0.95)
+            assert lower == pytest.approx(hdi[0], abs=1e-6)
+            assert upper == pytest.approx(hdi[1], abs=1e-6)
+
 
 class TestPosteriorUpdatingFromObservations:
     def test_coin_tosses(self):

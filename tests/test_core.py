@@ -27,7 +27,7 @@ class TestBetaShapeInitAndRepresentation:
         assert repr(result) == expected
 
     def test_parameters_are_floats(self):
-        result = BetaShape(1, 1)
+        result = BetaShape(a=1, b=1)
         assert isinstance(result.a, float)
         assert isinstance(result.b, float)
 
@@ -134,11 +134,13 @@ class TestBetaShapeSummaries:
         expected: tuple[float, float],
     ):
         result = BetaShape(a, b)
-        lower, upper = result.hdi(hdi_level)
+        hdi = result.hdi(hdi_level)
+        lower, upper = hdi
 
         dist = stats.beta(result.a, result.b)
         prob = dist.cdf(upper) - dist.cdf(lower)
 
+        assert isinstance(hdi, tuple) and len(hdi) == 2
         assert result.mean == pytest.approx(dist.mean(), abs=1e-6)
         assert 0.0 <= lower < result.mean < upper <= 1.0
         assert lower == pytest.approx(expected[0], abs=1e-6)
@@ -146,7 +148,7 @@ class TestBetaShapeSummaries:
         assert prob == pytest.approx(hdi_level, rel=1e-6, abs=1e-6)
 
     def test_invalid_parameters_returns_none(self):
-        assert BetaShape(1, 1).hdi(0.95) is None
+        assert BetaShape(a=1, b=1).hdi(0.95) is None
 
     @pytest.mark.parametrize("bad_value", [0.0, 1.0, 1.1, -0.1, math.nan, math.inf])
     def test_invalid_credibility_level_raises(self, bad_value: float):
@@ -177,6 +179,8 @@ class TestBetaShapeSummaries:
             (18.25, 6.75, 18.25 / 25, 17.25 / 23, (0.558194, 0.891582)),
             (35.25, 9.75, 35.25 / 45, 34.25 / 43, (0.662908, 0.896649)),
             (18, 4, 18 / 22, 17 / 20, (0.659947, 0.959123)),
+            (1, 50, 1 / 51, None, None),
+            (50, 1, 50 / 51, None, None),
         ],
     )
     def test_summary_stats(
@@ -305,6 +309,17 @@ class TestPosteriorUpdatingFromCount:
             expected_value = getattr(prior, prop)
             assert actual_value == expected_value
 
+    def test_many_trials_large_counts(self):
+        prior = BetaShape(a=1, b=1)
+        post = prior.posterior_from_counts(successes=1_000_000, trials=2_000_000)
+        lower, upper = post.hdi(0.90)
+        assert post.a == pytest.approx(1.0 + 1_000_000)
+        assert post.b == pytest.approx(1.0 + 1_000_000)
+        assert post.mean == pytest.approx(0.5)
+        assert post.mode == pytest.approx(0.5)
+        assert lower == pytest.approx(0.499, abs=1e-3)
+        assert upper == pytest.approx(0.501, abs=1e-3)
+
     @pytest.mark.parametrize(
         ("successes", "trials", "ctx"),
         [
@@ -337,6 +352,76 @@ class TestPosteriorUpdatingFromCount:
             prior.posterior_from_counts(successes, trials)
 
 
+class TestMultiplePosteriorUpdating:
+    def test_multiple_posterior_from_observations(self):
+        prior = BetaShape(a=2, b=2)
+
+        data_batch1 = [1, 0, 1, 1]  # 3 successes / 4 trials
+        post1 = prior.posterior_from_observations(data_batch1)
+        assert post1.a == pytest.approx(2.0 + 3)
+        assert post1.b == pytest.approx(2.0 + (4 - 3))
+
+        data_batch2 = [0, 1, 1]  # 2 successes / 3 trials
+        post2 = post1.posterior_from_observations(data_batch2)
+        assert post2.a == pytest.approx(2.0 + 3 + 2)
+        assert post2.b == pytest.approx(2.0 + (4 + 3) - (3 + 2))
+
+        # prior remains unchanged
+        assert prior.a == pytest.approx(2.0)
+        assert prior.b == pytest.approx(2.0)
+
+    def test_multiple_posterior_from_counts(self):
+        prior = BetaShape(a=2, b=2)
+
+        post1 = prior.posterior_from_counts(successes=3, trials=4)
+        assert post1.a == pytest.approx(2.0 + 3)
+        assert post1.b == pytest.approx(2.0 + (4 - 3))
+
+        post2 = post1.posterior_from_counts(successes=2, trials=3)
+        assert post2.a == pytest.approx(2.0 + 3 + 2)
+        assert post2.b == pytest.approx(2.0 + (4 + 3) - (3 + 2))
+
+        # prior remains unchanged
+        assert prior.a == pytest.approx(2.0)
+        assert prior.b == pytest.approx(2.0)
+
+    def test_chained_updates_mixed(self):
+        prior = BetaShape.uniform()
+
+        # first: raw observations
+        data1 = [1, 0, 1, 1, 0]  # successes = 3, trials = 5
+        post1 = prior.posterior_from_observations(data1)
+        assert post1.a == pytest.approx(1.0 + 3)
+        assert post1.b == pytest.approx(1.0 + (5 - 3))
+
+        # second: aggregated counts
+        post2 = post1.posterior_from_counts(successes=2, trials=3)
+        assert post2.a == pytest.approx(1.0 + 5)
+        assert post2.b == pytest.approx(1.0 + (8 - 5))
+
+        # third: another batch of observations
+        data2 = [0, 0, 1]  # successes = 1, trials = 3
+        post3 = post2.posterior_from_observations(data2)
+        total_successes = 3 + 2 + 1
+        total_trials = 5 + 3 + 3
+        assert post3.a == pytest.approx(1.0 + total_successes)
+        assert post3.b == pytest.approx(1.0 + (total_trials - total_successes))
+
+        # prior remains unchanged
+        assert prior.a == pytest.approx(1.0)
+        assert prior.b == pytest.approx(1.0)
+
+    def test_hdi_after_chained_updates(self):
+        prior = BetaShape(a=2, b=2)
+        post = (
+            prior.posterior_from_counts(successes=10, trials=20)
+            .posterior_from_observations([1] * 15 + [0] * 5)  # 15 successes, 20 trials
+            .posterior_from_counts(successes=8, trials=10)
+        )
+        lower, upper = post.hdi()
+        assert 0.0 <= lower < post.mean < upper <= 1.0
+
+
 class TestConveniencePriors:
     def test_uniform(self):
         result = BetaShape.uniform()
@@ -357,10 +442,15 @@ class TestConveniencePriors:
 
 class TestScipyObject:
     def test_to_dist_matches_parameters(self):
-        beta_shape = BetaShape(a=2.5, b=4.5)
-        result = beta_shape.to_dist()
-        quantile = result.ppf(0.25)
-        assert result.mean() == pytest.approx(beta_shape.mean)
+        beta_shape = BetaShape.uniform()
+        dist = beta_shape.to_dist()
+        assert hasattr(dist, "pdf") and hasattr(dist, "cdf") and hasattr(dist, "ppf")
+        assert dist.mean() == pytest.approx(beta_shape.mean)
+
+    @pytest.mark.parametrize("prob", [0.0, 0.25, 0.5, 0.75, 1.0])
+    def test_quantile(self, prob: float):
+        dist = BetaShape.uniform().to_dist()
+        quantile = dist.ppf(prob)
         assert 0.0 <= quantile <= 1.0
 
 

@@ -6,7 +6,7 @@ from typing import TypeAlias
 import pytest
 from scipy import stats
 
-from bayescoin import BetaShape, hdi
+from bayescoin import BetaShape
 
 ContextManager: TypeAlias = (
     nullcontext[None] | pytest.RaisesExc[TypeError] | pytest.RaisesExc[ValueError]
@@ -113,68 +113,6 @@ class TestBetaShapeSummaries:
         result = BetaShape(a, b)
         assert result.mode == expected
 
-
-class TestHDI:
-    @pytest.mark.parametrize(
-        ("a", "b", "hdi_level"),
-        [
-            (2, 2, 0.95),
-            (3, 5, 0.85),
-            (12, 8, 0.8),
-        ],
-    )
-    def test_hdi_function(self, a: int | float, b: int | float, hdi_level: float):
-        result = hdi(a, b, hdi_level)
-        lower, upper = result
-
-        dist = stats.beta(a, b)
-        prob = dist.cdf(upper) - dist.cdf(lower)
-
-        assert isinstance(result, tuple) and len(result) == 2
-        assert 0.0 <= lower < dist.mean() < upper <= 1.0
-        assert prob == pytest.approx(hdi_level, rel=1e-6, abs=1e-8)
-
-    @pytest.mark.parametrize("bad_value", [0.0, 1.0, 1.1, -0.5, math.nan, math.inf])
-    def test_invalid_credibility_level_raises(self, bad_value: float):
-        with pytest.raises(ValueError):
-            hdi(2, 2, bad_value)
-
-    @pytest.mark.parametrize(
-        ("a", "b"),
-        [
-            (0, 0),
-            (0, 1),
-            (1, 0),
-            (1, 1),
-            (-1, -1),
-            (-1, 2),
-            (1, -2),
-            (math.inf, math.inf),
-            (math.inf, 1),
-            (1, math.inf),
-            (math.nan, math.nan),
-            (math.nan, 1),
-            (1, math.nan),
-        ],
-        ids=[
-            "zero values",
-            "zero a",
-            "zero b",
-            "uniform",
-            "negative values",
-            "negative a",
-            "negative b",
-            "non-finite values",
-            "non-finite a",
-            "non-finite b",
-            "NaN values",
-            "NaN a",
-            "NaN b",
-        ],
-    )
-    def test_invalid_parameters_returns_none(self, a: int | float, b: int | float):
-        assert hdi(a, b, 0.95) is None
-
     @pytest.mark.parametrize(
         ("a", "b", "hdi_level", "expected"),
         [
@@ -188,7 +126,7 @@ class TestHDI:
             (12, 8, 0.8, (0.466301, 0.743738)),
         ],
     )
-    def test_hdi_method(
+    def test_hdi(
         self,
         a: int | float,
         b: int | float,
@@ -197,33 +135,33 @@ class TestHDI:
     ):
         result = BetaShape(a, b)
         lower, upper = result.hdi(hdi_level)
-        assert 0 <= lower < result.mean < upper <= 1
+
+        dist = stats.beta(result.a, result.b)
+        prob = dist.cdf(upper) - dist.cdf(lower)
+
+        assert result.mean == pytest.approx(dist.mean(), abs=1e-6)
+        assert 0.0 <= lower < result.mean < upper <= 1.0
         assert lower == pytest.approx(expected[0], abs=1e-6)
         assert upper == pytest.approx(expected[1], abs=1e-6)
+        assert prob == pytest.approx(hdi_level, rel=1e-6, abs=1e-6)
 
-    def test_hdi_method_uses_hdi_function(self):
-        beta_shape = BetaShape(2, 3)
-        excepted = hdi(beta_shape.a, beta_shape.b, 0.8)
-        result = beta_shape.hdi(0.8)
-        assert result == excepted
+    def test_invalid_parameters_returns_none(self):
+        assert BetaShape(1, 1).hdi(0.95) is None
 
-    def test_hdi_is_deterministic_and_cached(self):
-        a = 2
-        b = 5
+    @pytest.mark.parametrize("bad_value", [0.0, 1.0, 1.1, -0.1, math.nan, math.inf])
+    def test_invalid_credibility_level_raises(self, bad_value: float):
+        with pytest.raises(ValueError):
+            BetaShape(2, 2).hdi(bad_value)
+
+    def test_hdi_is_cached(self):
+        result = BetaShape(2, 5)
         level = 0.95
 
         # repeated calls should return identical results (and benefit from caching)
-        first = hdi(a, b, level)
-        second = hdi(a, b, level)
-        result = BetaShape(a, b)
+        first = result.hdi(level)
+        second = result.hdi(level)
 
         assert first == second
-        assert result.hdi(level) == first
-        assert result.hdi(level) == second
-
-        # Check monotonic property: lower < mean < upper
-        lower, upper = first
-        assert lower < result.mean < upper
 
 
 class TestPosteriorUpdatingFromObservations:

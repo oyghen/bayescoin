@@ -1,4 +1,4 @@
-__all__ = ("BetaShape", "hdi")
+__all__ = ["BetaShape"]
 
 import math
 from collections.abc import Iterable
@@ -51,7 +51,15 @@ class BetaShape:
 
     def hdi(self, level: float = 0.95) -> tuple[float, float] | None:
         """Return the highest density interval (HDI) at specified credibility level."""
-        return hdi(self.a, self.b, level)
+        a, b = self.a, self.b
+        if a <= 1.0 or b <= 1.0:
+            return None
+
+        p = round(float(level), 12)
+        if not (math.isfinite(p) and 0.0 < p < 1.0):
+            raise ValueError("credibility level must be a finite number in (0, 1)")
+
+        return _hdi_cached(a, b, p)
 
     # --- posterior updating
     def posterior_from_observations(
@@ -104,26 +112,12 @@ class BetaShape:
         if mode is not None:
             parts.append(f"{mode=:g}")
 
-        hdi_endpoints = self.hdi(hdi_level)
-        if hdi_endpoints is not None:
-            lower, upper = hdi_endpoints
+        hdi = self.hdi(hdi_level)
+        if hdi is not None:
+            lower, upper = hdi
             parts.append(f"{100 * hdi_level:g}%-HDI=[{lower:g}, {upper:g}]")
 
         return " ".join(parts)
-
-
-def hdi(a: int | float, b: int | float, level: float) -> tuple[float, float] | None:
-    """Return the HDI for a Beta distribution at specified credibility level."""
-    a = float(a)
-    b = float(b)
-    if not (math.isfinite(a) and math.isfinite(b)) or a <= 1.0 or b <= 1.0:
-        return None
-
-    p = round(float(level), 12)
-    if not (math.isfinite(p) and 0.0 < p < 1.0):
-        raise ValueError("credibility level must be a finite number in (0, 1)")
-
-    return _hdi_cached(a, b, p)
 
 
 @lru_cache(maxsize=256)

@@ -7,7 +7,7 @@ app = typer.Typer(add_completion=False)
 
 
 @app.command()
-def main(
+def counts(
     successes: int,
     trials: int,
     a: float = 1.0,
@@ -19,5 +19,6 @@ def main(
     rprint(post.summary(hdi_level))
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Canonical entry point for CLI execution."""
     app()

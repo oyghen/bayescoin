@@ -442,16 +442,14 @@ class TestConveniencePriors:
 
 class TestScipyObject:
     def test_to_dist_matches_parameters(self):
-        beta_shape = BetaShape.uniform()
-        dist = beta_shape.to_dist()
-        assert hasattr(dist, "pdf") and hasattr(dist, "cdf") and hasattr(dist, "ppf")
-        assert dist.mean() == pytest.approx(beta_shape.mean)
+        result = BetaShape(2, 4).to_dist()
+        assert all(hasattr(result, name) for name in ["pdf", "cdf", "ppf", "mean"])
+        assert result.mean() == pytest.approx(2 / (2 + 4))
 
     @pytest.mark.parametrize("prob", [0.0, 0.25, 0.5, 0.75, 1.0])
     def test_quantile(self, prob: float):
-        dist = BetaShape.uniform().to_dist()
-        quantile = dist.ppf(prob)
-        assert 0.0 <= quantile <= 1.0
+        result = BetaShape.uniform().to_dist().ppf(prob)
+        assert 0.0 <= result <= 1.0
 
 
 class TestSummaryString:

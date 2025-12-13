@@ -99,6 +99,11 @@ def plot(
     # disable y ticks and labels
     ax.set_yticks([])
 
+    # make uniform Beta plot prettier by increasing the upper y limit
+    if besh.a == 1.0 and besh.b == 1.0:
+        _, y_max = ax.set_ylim()
+        ax.set_ylim(top=2 * y_max)
+
     # set legend
     ax.legend(loc="best", frameon=False)
 

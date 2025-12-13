@@ -32,7 +32,7 @@ def plot(
     hdi = besh.hdi(hdi_level)
     if hdi is None:
         # shade entire area under the Beta distribution
-        ax.fill_between(x, y, alpha=0.5, zorder=0)
+        ax.fill_between(x, y, alpha=0.2, zorder=0)
     else:
         # shade HDI area
         mask = (x >= hdi[0]) & (x <= hdi[1])

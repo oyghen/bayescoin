@@ -20,7 +20,7 @@ def counts(
     post = prior.posterior_from_counts(successes, trials)
     rprint(post.summary(hdi_level))
     if plot:
-        ax = bayescoin.plot(post.a, post.b, hdi_level)
+        ax = bayescoin.plot(post, hdi_level)
         success_text = "1 success" if successes == 1 else f"{successes} successes"
         trial_text = "1 trial" if trials == 1 else f"{trials} trials"
         ax.set_title(f"Observed {success_text} out of {trial_text}")

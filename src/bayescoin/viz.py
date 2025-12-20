@@ -1,5 +1,6 @@
 __all__ = ["plot"]
 
+from functools import singledispatch
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +9,14 @@ from matplotlib.axes import Axes
 import bayescoin
 
 
-def plot(
+@singledispatch
+def plot(value, *args, **kwargs) -> Axes:
+    """Return Axes plotting a Beta density for supported inputs."""
+    raise TypeError(f"unsupported type {type(value).__name__!r}")
+
+
+@plot.register
+def _(
     a: int | float,
     b: int | float,
     hdi_level: float = 0.95,
@@ -17,7 +25,17 @@ def plot(
 ) -> Axes:
     """Return Axes plotting the Beta(a, b) density with shaded HDI."""
     besh = bayescoin.BetaShape(a, b)
+    return plot(besh, hdi_level, num_points, ax)
 
+
+@plot.register
+def _(
+    besh: bayescoin.BetaShape,
+    hdi_level: float = 0.95,
+    num_points: int = 4096,
+    ax: Axes | None = None,
+) -> Axes:
+    """Return Axes plotting the Beta density for a BetaShape object."""
     if ax is None:
         ax = _gca_with_size(figsize=(9, 6))
 

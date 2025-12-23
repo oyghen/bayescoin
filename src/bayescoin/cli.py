@@ -7,6 +7,17 @@ import bayescoin
 app = typer.Typer(add_completion=False)
 
 
+@app.callback(invoke_without_command=True)
+def version(
+    show: bool = typer.Option(
+        False, "--version", "-v", help="Show app version and exit."
+    ),
+) -> None:
+    if show:
+        typer.echo(f"{bayescoin.__name__} {bayescoin.__version__}")
+        raise typer.Exit()
+
+
 @app.command()
 def counts(
     successes: int,

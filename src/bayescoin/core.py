@@ -15,10 +15,10 @@ class BetaShape:
     a: int | float
     b: int | float
 
-    def __post_init__(self) -> None:
+    def __init__(self, a: int | float, b: int | float) -> None:
         # normalize to floats for internal consistency and cache stability
-        a = float(self.a)
-        b = float(self.b)
+        a = float(a)
+        b = float(b)
 
         if not (math.isfinite(a) and math.isfinite(b)):
             raise ValueError("a and b must be finite numbers")

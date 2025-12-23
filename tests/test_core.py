@@ -15,7 +15,7 @@ ContextManager: TypeAlias = (
 
 class TestBetaShapeInitAndRepresentation:
     @pytest.mark.parametrize(
-        ("a", "b", "expected"),
+        "a, b, expected",
         [
             (1, 2, "BetaShape(a=1, b=2)"),
             (1.0, 3.0, "BetaShape(a=1, b=3)"),
@@ -32,7 +32,7 @@ class TestBetaShapeInitAndRepresentation:
         assert isinstance(result.b, float)
 
     @pytest.mark.parametrize(
-        ("a", "b"),
+        "a, b",
         [
             (1, 1),
             (0.5, 0.5),
@@ -45,7 +45,7 @@ class TestBetaShapeInitAndRepresentation:
             result.a = 999
 
     @pytest.mark.parametrize(
-        ("a", "b"),
+        "a, b",
         [
             (0, 0),
             (0, 1),
@@ -82,7 +82,7 @@ class TestBetaShapeInitAndRepresentation:
 
 class TestBetaShapeSummaries:
     @pytest.mark.parametrize(
-        ("a", "b", "expected"),
+        "a, b, expected",
         [
             (1, 1, 0.5),
             (2, 2, 0.5),
@@ -98,7 +98,7 @@ class TestBetaShapeSummaries:
         assert result.mean == pytest.approx(dist.mean())
 
     @pytest.mark.parametrize(
-        ("a", "b", "expected"),
+        "a, b, expected",
         [
             # defined when both > 1
             (2, 3, (2 - 1) / (2 + 3 - 2)),
@@ -114,7 +114,7 @@ class TestBetaShapeSummaries:
         assert result.mode == expected
 
     @pytest.mark.parametrize(
-        ("a", "b", "hdi_level", "expected"),
+        "a, b, hdi_level, expected",
         [
             (2, 2, 0.95, (0.094299, 0.905701)),
             (2, 2, 0.90, (0.135350, 0.864649)),
@@ -166,7 +166,7 @@ class TestBetaShapeSummaries:
         assert first == second
 
     @pytest.mark.parametrize(
-        ("a", "b", "mean", "mode", "hdi"),
+        "a, b, mean, mode, hdi",
         [
             (0.5, 0.5, 0.5, None, None),
             (1, 1, 0.5, None, None),
@@ -245,7 +245,7 @@ class TestPosteriorUpdatingFromObservations:
         assert post.b == pytest.approx(4 + (3 - 2))
 
     @pytest.mark.parametrize(
-        ("data", "prior", "expected"),
+        "data, prior, expected",
         [
             ([1, 0, 1, 1, 0], BetaShape(a=1, b=1), BetaShape(a=4, b=3)),
             ([1, 0, 1, 1, 0], BetaShape(a=2, b=2), BetaShape(a=5, b=4)),
@@ -269,7 +269,7 @@ class TestPosteriorUpdatingFromObservations:
 
 class TestPosteriorUpdatingFromCount:
     @pytest.mark.parametrize(
-        ("successes", "trials"),
+        "successes, trials",
         [
             (5, 10),
             (4, 10),
@@ -321,7 +321,7 @@ class TestPosteriorUpdatingFromCount:
         assert upper == pytest.approx(0.501, abs=1e-3)
 
     @pytest.mark.parametrize(
-        ("successes", "trials", "ctx"),
+        "successes, trials, ctx",
         [
             (1.0, 2.0, pytest.raises(TypeError)),
             (1.0, 2, pytest.raises(TypeError)),

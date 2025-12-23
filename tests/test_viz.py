@@ -15,7 +15,7 @@ class TestPlot:
             bayescoin.plot("string input not supported")
 
     @pytest.mark.parametrize(
-        ("a", "b", "hdi_level"),
+        "a, b, hdi_level",
         [
             (2.0, 2.0, 0.5),
             (3.0, 6.0, 0.9),
@@ -38,7 +38,7 @@ class TestPlot:
         assert upper <= xdata.max()
 
     @pytest.mark.parametrize(
-        ("besh", "hdi_level"),
+        "besh, hdi_level",
         [
             (bayescoin.BetaShape(2, 2), 0.5),
             (bayescoin.BetaShape(3, 6), 0.9),

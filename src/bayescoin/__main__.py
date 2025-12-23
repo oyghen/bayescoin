@@ -1,4 +1,4 @@
-from bayescoin.cli import main
+from bayescoin import _cli_entry as cli_entry
 
 if __name__ == "__main__":
-    main()
+    cli_entry.main()

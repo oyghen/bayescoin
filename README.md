@@ -10,5 +10,5 @@
 </div>
 
 ```shell
-pip install 'bayescoin[cli]'
+uv tool install 'bayescoin[cli]'
 ```

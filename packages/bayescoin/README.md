@@ -9,16 +9,6 @@
 
 </div>
 
-## Installation
-
-Install the core library (stdlib-only, no extra dependencies):
-
-```bash
+```shell
 pip install bayescoin
-```
-
-Install with extended functionality (adds optional dependencies for advanced date/time handling):
-
-```bash
-pip install 'bayescoin[plus]'
 ```

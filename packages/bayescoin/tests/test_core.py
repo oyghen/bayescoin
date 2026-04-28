@@ -41,7 +41,7 @@ class TestBetaShapeInitAndRepresentation:
     def test_frozen_dataclass(self, a: int | float, b: int | float):
         result = BetaShape(a, b)
         with pytest.raises(FrozenInstanceError):
-            result.a = 999
+            result.a = 999  # type: ignore
 
     @pytest.mark.parametrize(
         "a, b",

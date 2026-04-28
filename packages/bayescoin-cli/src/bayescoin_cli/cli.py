@@ -26,19 +26,26 @@ def main(
 
 @app.command()
 def counts(
-    successes: int,
-    trials: int,
-    a: float = 1.0,
-    b: float = 1.0,
-    hdi_level: float = 0.95,
+    successes: int = typer.Argument(help="Number of successes."),
+    trials: int = typer.Argument(help="Number of trials."),
+    a: float = typer.Option(1.0, help="Shape parameter a (prior, > 0)."),
+    b: float = typer.Option(1.0, help="Shape parameter b (prior, > 0)."),
+    hdi: float = typer.Option(0.95, help="HDI credibility level (0, 1)."),
     plot: bool = typer.Option(False, "--plot", help="Plot Beta density with HDI."),
-):
-    """Show updated Beta density based on observed success and trial counts."""
+) -> None:
+    """Display updated Beta density based on observed success and trial counts.
+
+    Example:
+    $ bayescoin counts 7 21
+    $ bayescoin counts 7 21 --plot
+    $ bayescoin counts 7 21 --plot --hdi 0.9 --a 30 --b 30
+    $ bayescoin counts 7 21 --plot --hdi 0.9 --a 0.5 --b 0.5
+    """
     prior = bayescoin.BetaShape(a, b)
     post = prior.posterior_from_counts(successes, trials)
-    console.print(post.summary(hdi_level))
+    console.print(post.summary(hdi))
     if plot:
-        ax = bayescoin.plot(post, hdi_level)
+        ax = bayescoin.plot(post, hdi)
         success_text = "1 success" if successes == 1 else f"{successes} successes"
         trial_text = "1 trial" if trials == 1 else f"{trials} trials"
         ax.set_title(f"Observed {success_text} out of {trial_text}")

@@ -1,10 +1,9 @@
+import bayescoin
 import matplotlib
 import matplotlib.pyplot as plt
 import pytest
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
-
-import bayescoin
 
 matplotlib.use("Agg")
 

@@ -1,32 +1,21 @@
 [project]
-name = "bayescoin"
+name = "bayescoin-workspace"
 version = "0.1.3"
-description = ""
-readme = "README.md"
-authors = [
-    { name = "oyghen", email = "oyghen@duck.com" }
-]
 requires-python = ">=3.11"
-dependencies = [
-    "matplotlib>=3.10.7",
-    "scipy>=1.16.3",
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "packages/bayescoin",
+    "packages/bayescoin-cli",
 ]
-
-[project.scripts]
-bayescoin = "bayescoin._cli_entry:main"
-
-[project.optional-dependencies]
-cli = [
-    "typer>=0.20.0",
-]
-
-[build-system]
-requires = ["uv_build>=0.9.15,<0.10.0"]
-build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.5.0",
-    "pytest>=9.0.1",
-    "ruff>=0.14.8",
+    "pre-commit>=4.6.0",
+    "pytest>=9.0.3",
+    "ruff>=0.15.11",
 ]

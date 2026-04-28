@@ -1,21 +1,26 @@
+import bayescoin
 import matplotlib.pyplot as plt
 import typer
 from rich.console import Console
-
-import bayescoin
 
 console = Console()
 app = typer.Typer(add_completion=False)
 
 
 @app.callback(invoke_without_command=True)
-def version(
-    show: bool = typer.Option(
-        False, "--version", "-V", help="Show app version and exit."
-    ),
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(False, "--version", help="Show version and exit."),
 ) -> None:
-    if show:
-        typer.echo(f"{bayescoin.__name__} {bayescoin.__version__}")
+    pkg_name = bayescoin.__name__
+    pkg_version = typer.style(bayescoin.__version__, fg=typer.colors.CYAN)
+
+    if version:
+        typer.echo(f"{pkg_name} {pkg_version}")
+        raise typer.Exit()
+
+    if ctx.invoked_subcommand is None:
+        typer.echo(f"{pkg_name} {pkg_version} ready. See --help for usage.")
         raise typer.Exit()
 
 
@@ -39,8 +44,3 @@ def counts(
         ax.set_title(f"Observed {success_text} out of {trial_text}")
         ax.set_xlabel("Probability of success")
         plt.show()
-
-
-def main() -> None:
-    """Canonical entry point for CLI execution."""
-    app()

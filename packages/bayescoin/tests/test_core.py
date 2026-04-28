@@ -4,9 +4,8 @@ from dataclasses import FrozenInstanceError
 from typing import TypeAlias
 
 import pytest
-from scipy import stats
-
 from bayescoin import BetaShape
+from scipy import stats
 
 ContextManager: TypeAlias = (
     nullcontext[None] | pytest.RaisesExc[TypeError] | pytest.RaisesExc[ValueError]
